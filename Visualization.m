@@ -1,3 +1,14 @@
+%% Create directory for saving the data
+% Get the date and time and convert it to a char array
+d = datetime('now','Format', 'yyyy.MM.dd HH.mm.ss');
+d_string = datestr(d, 'yyyy.MM.dd HH.mm.ss'); 
+% If no data history folder exists, make one
+if ~exist('data_history', 'dir')
+    mkdir('data_history')
+end
+% Set the path with the child directory as the current datetime
+dir_path = fullfile('data_history', d_string);
+mkdir('data_history', d_string);         % create the directory
 %% Select data model
 % List for selection dialog box
 models_selection_list = {
@@ -138,15 +149,19 @@ for t = 1 : data_sets
     % edge colour outlines the edges, 'FaceAlpha', sets the transparency
     surfm(latitude, longitude, ozone_data(:,:,t), 'EdgeColor', 'none',...
         'FaceAlpha', 0.5) 
+    
+    title(sp1, 'Regional Map Data')
 
     %% Display the raw data                                     (subplot 2)
     sp2 = subplot(12,12,[21,60]);
     mesh(latitude, longitude, ozone_data(:,:,t))
+    title(sp2, 'Raw Data Mesh')
 
     %% Display the contour or simple map data                   (subplot 3)
     sp3 = subplot(12,12,[81,144]);
     % Create the map
     if contour_map == 1
+         title('Contour Map')
          worldmap('Europe'); % set the part of the earth to show
          load coastlines
          plot(coastlat,coastlon)
@@ -167,14 +182,18 @@ for t = 1 : data_sets
          Plots = findobj(gca,'Type','Axes');
          Plots.SortMethod = 'depth';
     else
+        title(sp3, 'Simple Map')
         % Creates pseudocolor plot using the latitude and longitude
         % as x & y coordinates for vertices, and the current data set
         % as the matrix with the values
+        % A copy of the transposed data matrix is used for pcolor
+        % (rows and cols swapped), in order for the simple map to 
+        % display correctly
         transposed_data = ozone_data(:,:,t)';
         showmap = pcolor(orig_lon,orig_lat,transposed_data);
-        showmap.EdgeAlpha = 0;     % sets edge line to max transparency
+        showmap.EdgeAlpha = 0;        % sets edge line to max transparency
 
-        colorbar.Label.String = 'Levels';
+        % get long and lat variables for plotting the region's map
         load coast;
 
         % retains plots in the current axes so that 
@@ -184,6 +203,12 @@ for t = 1 : data_sets
 
         showmap;
     end
+    %% Save data to files
+    % Capture the figure (screenshot) data, then write the image data to
+    % the specified file
+    fig_capture = getframe(f1);
+    file = fullfile(dir_path, sprintf('%d.png',t));
+    imwrite(fig_capture.cdata, file)
 end
 % After all data sets were visualized, 
 % Wait a few seconds then close the figure window
