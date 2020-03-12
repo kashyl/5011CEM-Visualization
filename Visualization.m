@@ -63,23 +63,27 @@ latitude = double(ncread(data_file, 'lat'));
 longitude = double(ncread(data_file, 'lon'));
 
 % Gets the number of data sets to loop through
-data_sets = size(ozone_data);      % data_sets = [700, 400, 25]
-data_sets = data_sets(3);          % data_sets = 25
+data_sets = size(ozone_data);       % data_sets = [700, 400, 25]
+data_sets = data_sets(3);           % data_sets = 25
 
-time = ncread(data_file, 'hour');  % array of time in hours from the file
+time = ncread(data_file, 'hour');   % array of time in hours from the file
 
 %% Create figure window 
 % Capitalize the first letter of the name and set name as figure title
 model_name{1}(1) = upper(model_name{1}(1));
 figure_name = sprintf('%s Ozone Layer', model_name{1});
 
-% Create figure(s) window. 
+% Create figure window, set it as fullscreen.
 % figure_name from above is set as the title
 % NumberTitle off so only the name will appear as title (no fig. count)
-f1 = figure('Name', figure_name, 'NumberTitle', 'off');
-
-if colorblind == 1
-    colormap summer;
+% Unit of measurement = normalized - depends on parent container
+% outerposition = location and size of the outer bounds
+% [left bottom width height]
+f1 = figure('Name', figure_name, 'NumberTitle', 'off', ...
+    'units','normalized','outerposition',[0 0 1 1]);
+f1.WindowState = 'maximized';         % Account for the taskbar
+if colorblind == 1                    % If colorblind is set to true, 
+    colormap summer;                  % adjust the colormap 
 end
 
 %% Visualization main loop
@@ -97,9 +101,9 @@ for t = 1 : data_sets
     
     subplot(2,2,1)
     %% Create the map                                           (subplot 1)
-    worldmap('Europe'); % set the part of the earth to show
+    worldmap('Europe');                 % set the part of the earth to show
     load coastlines
-    plot(coastlat,coastlon)              % plot vs plotm?
+    plot(coastlat,coastlon)             % plot vs plotm?
     land = shaperead('landareas', 'UseGeoCoords', true);
     geoshow(gca, land, 'FaceColor', [0.5 0.7 0.5])
     lakes = shaperead('worldlakes', 'UseGeoCoords', true);
@@ -122,22 +126,3 @@ end
 % Wait a few seconds then close the figure window
 pause(2);  
 close(f1);
-
-
-
-%% OLD CODE
-%     % Creates pseudocolor plot using the latitude and longitude
-%     % as x & y coordinates for vertices, and the current data set
-%     % as the matrix with the values
-%      showmap = pcolor(latitude,longitude,ozone_data(:,:,t));
-%      showmap.EdgeAlpha = 0;     % sets edge line to max transparency
-%     
-%      colorbar.Label.String = 'Levels';
-%      load coast;
-%     
-%     % retains plots in the current axes so that 
-%     % new plots added to the axes do not delete existing plots
-%     hold on;
-%     plot(long,lat,'k');
-%     
-%     showmap;
