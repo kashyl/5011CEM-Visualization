@@ -33,7 +33,7 @@ model_list = ["chimere", "emep", "ensemble", "eurad","lotoseuros", ...
 
 %% Colorblind mode prompt
 % Question dialog box for colorblind mode, default OFF.
-colorblind = 0;
+colorblind_mode = 0;
 selection = questdlg("Open in Colorblind mode?",...
     'Colorblind Mode',...
     'Yes',...
@@ -41,11 +41,28 @@ selection = questdlg("Open in Colorblind mode?",...
     'No'); % default choice (if user clicks X)
 switch selection
     case 'Yes'
-        colorblind = 1;
+        colorblind_mode = 1;
     case 'No'
-        colorblind = 0;
+        colorblind_mode = 0;
 end
-    
+   
+%% Contour or simple map prompt
+% Question dialog box for contour (long) or simple map
+contour_map = 0;
+selection = questdlg([
+    "For the additional map, view in simple or contour mode?" ... 
+    "IMPORTANT: CONTOUR MAP MAY TAKE A LONG TIME TO DRAW."],...
+    'Additional Map View Mode',...
+    'Simple',...
+    'Contour',...
+    'Simple'); % default choice (if user clicks X)
+switch selection
+    case 'Contour'
+        contour_map = 1;
+    case 'Simple'
+        contour_map = 0;
+end
+
 %% Load model data
 % Set the data file to be used
 data_file = 'combined_data.nc';
@@ -82,11 +99,14 @@ figure_name = sprintf('%s Ozone Layer', model_name{1});
 f1 = figure('Name', figure_name, 'NumberTitle', 'off', ...
     'units','normalized','outerposition',[0 0 1 1]);
 f1.WindowState = 'maximized';         % Account for the taskbar
-if colorblind == 1                    % If colorblind is set to true, 
+if colorblind_mode == 1                    % If colorblind is set to true, 
     colormap summer;                  % adjust the colormap 
 end
 
 %% Visualization main loop
+% Save original lat & lon values for pcolor
+orig_lat = latitude;
+orig_lon = longitude;
 % 2-D grid coordinates based on vector X and Y coords.
 % X matrix - each row is copy of X
 % Y matrix - each column is copy of Y
@@ -101,7 +121,7 @@ for t = 1 : data_sets
     
     %% Display the data on map                                  (subplot 1)
     % Create the map
-    sp1 = subplot(12,12,[13,104]);
+    sp1 = subplot(12,12,[25,116]);
     worldmap('Europe');                 % set the part of the earth to show
     load coastlines
     plot(coastlat,coastlon)             % plot vs plotm?
@@ -122,30 +142,48 @@ for t = 1 : data_sets
     %% Display the raw data                                     (subplot 2)
     sp2 = subplot(12,12,[21,60]);
     mesh(latitude, longitude, ozone_data(:,:,t))
-    
-    %% Display the contour map data                             (subplot 3)
-%      sp3 = subplot(12,12,[81,120]);
-%      % Create the map
-%      worldmap('Europe'); % set the part of the earth to show
-%      load coastlines
-%      plot(coastlat,coastlon)
-%      land = shaperead('landareas', 'UseGeoCoords', true);
-%      geoshow(gca, land, 'FaceColor', [0.5 0.7 0.5])
-%      lakes = shaperead('worldlakes', 'UseGeoCoords', true);
-%      geoshow(lakes, 'FaceColor', 'blue')
-%      rivers = shaperead('worldrivers', 'UseGeoCoords', true);
-%      geoshow(rivers, 'Color', 'blue')
-%      cities = shaperead('worldcities', 'UseGeoCoords', true);
-%      geoshow(cities, 'Marker', '.', 'Color', 'red')
-%  
-%      % display the data
-%      NumContours = 10;
-%      contourfm(latitude, longitude, ozone_data(:,:,t), NumContours)
-%  
-%      % This is a bit advanced, sets the visibility of the various parts of the
-%      % plot so the land, cities etc shows through.
-%      Plots = findobj(gca,'Type','Axes');
-%      Plots.SortMethod = 'depth';
+
+    %% Display the contour or simple map data                   (subplot 3)
+    sp3 = subplot(12,12,[81,144]);
+    % Create the map
+    if contour_map == 1
+         worldmap('Europe'); % set the part of the earth to show
+         load coastlines
+         plot(coastlat,coastlon)
+         land = shaperead('landareas', 'UseGeoCoords', true);
+         geoshow(gca, land, 'FaceColor', [0.5 0.7 0.5])
+         lakes = shaperead('worldlakes', 'UseGeoCoords', true);
+         geoshow(lakes, 'FaceColor', 'blue')
+         rivers = shaperead('worldrivers', 'UseGeoCoords', true);
+         geoshow(rivers, 'Color', 'blue')
+         cities = shaperead('worldcities', 'UseGeoCoords', true);
+         geoshow(cities, 'Marker', '.', 'Color', 'red')
+
+         % Display the data
+         contourfm(latitude, longitude, ozone_data(:,:,t))
+
+         % Sets the visibility of the various parts of the
+         % plot so the land, cities etc shows through.
+         Plots = findobj(gca,'Type','Axes');
+         Plots.SortMethod = 'depth';
+    else
+        % Creates pseudocolor plot using the latitude and longitude
+        % as x & y coordinates for vertices, and the current data set
+        % as the matrix with the values
+        transposed_data = ozone_data(:,:,t)';
+        showmap = pcolor(orig_lon,orig_lat,transposed_data);
+        showmap.EdgeAlpha = 0;     % sets edge line to max transparency
+
+        colorbar.Label.String = 'Levels';
+        load coast;
+
+        % retains plots in the current axes so that 
+        % new plots added to the axes do not delete existing plots
+        hold on;
+        plot(long, lat, 'k')
+
+        showmap;
+    end
 end
 % After all data sets were visualized, 
 % Wait a few seconds then close the figure window
