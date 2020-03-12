@@ -90,7 +90,7 @@ end
 % 2-D grid coordinates based on vector X and Y coords.
 % X matrix - each row is copy of X
 % Y matrix - each column is copy of Y
-% [latitude,longitude] = meshgrid(latitude, longitude);
+[latitude,longitude] = meshgrid(latitude, longitude);
 for t = 1 : data_sets
     % Set current figure window to 'f1' (created above)
     figure(f1)
@@ -99,8 +99,9 @@ for t = 1 : data_sets
     sgtitle(f1, sprintf('Model: %s - Current hour: %d', ...
     model_name{1},time(t)))
     
-    subplot(2,2,1)
-    %% Create the map                                           (subplot 1)
+    %% Display the data on map                                  (subplot 1)
+    % Create the map
+    sp1 = subplot(12,12,[13,104]);
     worldmap('Europe');                 % set the part of the earth to show
     load coastlines
     plot(coastlat,coastlon)             % plot vs plotm?
@@ -113,14 +114,38 @@ for t = 1 : data_sets
     cities = shaperead('worldcities', 'UseGeoCoords', true);
     geoshow(cities, 'Marker', '.', 'Color', 'red')
 
-    %% Plot the data                                            (subplot 1)
+    % Plot the data
     % edge colour outlines the edges, 'FaceAlpha', sets the transparency
     surfm(latitude, longitude, ozone_data(:,:,t), 'EdgeColor', 'none',...
         'FaceAlpha', 0.5) 
 
     %% Display the raw data                                     (subplot 2)
-    subplot(2,2,2)
+    sp2 = subplot(12,12,[21,60]);
     mesh(latitude, longitude, ozone_data(:,:,t))
+    
+    %% Display the contour map data                             (subplot 3)
+%      sp3 = subplot(12,12,[81,120]);
+%      % Create the map
+%      worldmap('Europe'); % set the part of the earth to show
+%      load coastlines
+%      plot(coastlat,coastlon)
+%      land = shaperead('landareas', 'UseGeoCoords', true);
+%      geoshow(gca, land, 'FaceColor', [0.5 0.7 0.5])
+%      lakes = shaperead('worldlakes', 'UseGeoCoords', true);
+%      geoshow(lakes, 'FaceColor', 'blue')
+%      rivers = shaperead('worldrivers', 'UseGeoCoords', true);
+%      geoshow(rivers, 'Color', 'blue')
+%      cities = shaperead('worldcities', 'UseGeoCoords', true);
+%      geoshow(cities, 'Marker', '.', 'Color', 'red')
+%  
+%      % display the data
+%      NumContours = 10;
+%      contourfm(latitude, longitude, ozone_data(:,:,t), NumContours)
+%  
+%      % This is a bit advanced, sets the visibility of the various parts of the
+%      % plot so the land, cities etc shows through.
+%      Plots = findobj(gca,'Type','Axes');
+%      Plots.SortMethod = 'depth';
 end
 % After all data sets were visualized, 
 % Wait a few seconds then close the figure window
