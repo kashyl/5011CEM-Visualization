@@ -1,14 +1,3 @@
-%% Create directory for saving the data
-% Get the date and time and convert it to a char array
-d = datetime('now','Format', 'yyyy.MM.dd HH.mm.ss');
-d_string = datestr(d, 'yyyy.MM.dd HH.mm.ss'); 
-% If no data history folder exists, make one
-if ~exist('data_history', 'dir')
-    mkdir('data_history')
-end
-% Set the path with the child directory as the current datetime
-dir_path = fullfile('data_history', d_string);
-mkdir('data_history', d_string);         % create the directory
 %% Select data model
 % List for selection dialog box
 models_selection_list = {
@@ -110,9 +99,22 @@ figure_name = sprintf('%s Ozone Layer', model_name{1});
 f1 = figure('Name', figure_name, 'NumberTitle', 'off', ...
     'units','normalized','outerposition',[0 0 1 1]);
 f1.WindowState = 'maximized';         % Account for the taskbar
-if colorblind_mode == 1                    % If colorblind is set to true, 
-    colormap summer;                  % adjust the colormap 
+if colorblind_mode == 1               % If colorblind is set to true, 
+    colormap summer                   % adjust the colormap 
 end
+
+%% Create directory for saving the data
+% Get the date and time and convert it to a char array
+d = datetime('now');
+d_string = datestr(d, 'yyyy.mm.dd HH.MM.ss'); 
+d_string = sprintf('%s %s', d_string, model_name{1});
+% If no data history folder exists, make one
+if ~exist('data_history', 'dir')
+    mkdir('data_history')
+end
+% Set the path with the child directory as the current datetime
+dir_path = fullfile('data_history', d_string);
+mkdir('data_history', d_string);         % create the directory
 
 %% Visualization main loop
 % Save original lat & lon values for pcolor
